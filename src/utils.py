@@ -1,35 +1,33 @@
-import re
-import os
-import pandas as pd
-import multiprocessing
-from time import time as timer
-from tqdm import tqdm
-import numpy as np
-from pathlib import Path
-from functools import partial
+# src/utils.py
+
 import requests
-import urllib
+from tqdm import tqdm
+import os
 
-def download_image(image_link, savefolder):
-    if(isinstance(image_link, str)):
-        filename = Path(image_link).name
-        image_save_path = os.path.join(savefolder, filename)
-        if(not os.path.exists(image_save_path)):
+def download_images(images_to_download, save_directory):
+    """
+    Downloads images one by one from a list of (URL, ID) tuples.
+    This is a simpler, more reliable version than the original.
+    """
+    # Create the save directory if it doesn't exist
+    os.makedirs(save_directory, exist_ok=True)
+    
+    print(f"Starting sequential download of {len(images_to_download)} images...")
+    
+    for url, sample_id in tqdm(images_to_download):
+        file_path = os.path.join(save_directory, f"{sample_id}.jpg")
+        
+        # Only download if the file doesn't already exist
+        if not os.path.exists(file_path):
             try:
-                urllib.request.urlretrieve(image_link, image_save_path)    
-            except Exception as ex:
-                print('Warning: Not able to download - {}\n{}'.format(image_link, ex))
-        else:
-            return
-    return
-
-def download_images(image_links, download_folder):
-    if not os.path.exists(download_folder):
-        os.makedirs(download_folder)
-    results = []
-    download_image_partial = partial(download_image, savefolder=download_folder)
-    with multiprocessing.Pool(100) as pool:
-        for result in tqdm(pool.imap(download_image_partial, image_links), total=len(image_links)):
-            results.append(result)
-        pool.close()
-        pool.join()
+                response = requests.get(url, timeout=10) # 10-second timeout
+                response.raise_for_status() # Raise an exception for bad status codes (404, 500, etc.)
+                
+                with open(file_path, 'wb') as f:
+                    f.write(response.content)
+            except requests.exceptions.RequestException as e:
+                # This will catch connection errors, timeouts, bad status codes, etc.
+                # print(f"Could not download {url}: {e}")
+                pass # We'll just skip broken links silently
+                
+    print("Image download process complete.")

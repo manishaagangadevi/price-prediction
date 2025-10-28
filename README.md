@@ -18,12 +18,32 @@ This project tackles the Amazon ML Challenge 2025, demonstrating advanced featur
 * **Iterative Modeling & Analysis:** Systematically evaluates the contribution of different feature sets, providing key insights into model behavior.
 * **Optimized Performance:** Leverages techniques like PCA for dimensionality reduction and LightGBM for efficient gradient boosting.
 
-## ⚙️ Architecture & Methodology
+## 🛠️ Pipeline Architecture & Methodology
 
-The core system is a unified `sklearn` `Pipeline` designed for seamless integration of diverse data types.
+The final model is an `sklearn` `Pipeline` that combines a `ColumnTransformer` (for feature processing) with an `LGBMRegressor`. This allows for a single `.fit()` and `.predict()` call on raw, mixed-type data.
 
-[ Raw Product Data (Text, Image Links) ] | v [ Custom Feature Engineering (Brand, IPQ) ] | v [ Multi-Modal Preprocessing Pipeline (ColumnTransformer) ] | |--> [ Text Pipeline ] --> [ TF-IDF ] -------------> | |--> [ Image Pipeline ] --> [ ResNet50 + PCA ] ---> | |--> [ Tabular Pipeline ] --> [ Scaler/Encoder ] -> | | v | [ Combined Feature Matrix ] | | | v +-----------------------------------> [ LightGBM Regressor ] | v [ Predicted Price (log1p) ]
-
+Here is the high-level architecture:
+<pre><code>
+[ Raw Product Data (Text, Image Links) ]
+          |
+          v
+[ Custom Feature Engineering (Brand, IPQ) ]
+          |
+          v
+[ Multi-Modal Preprocessing Pipeline (ColumnTransformer) ]
+    |
+    |--> [ Text Pipeline ] --> [ TF-IDF ] -------------> |
+    |--> [ Image Pipeline ] --> [ ResNet50 + PCA ] ---> |
+    |--> [ Tabular Pipeline ] --> [ Scaler/Encoder ] -> |
+          |                                             v
+          |                                  [ Combined Feature Matrix ]
+          |                                             |
+          |                                             v
+          +-----------------------------------> [ LightGBM Regressor ]
+                                                        |
+                                                        v
+                                               [ Predicted Price (log1p) ]
+</code></pre>
 
 ### 1. Strategic Feature Engineering
 
@@ -67,7 +87,26 @@ Iterative model development revealed the relative importance of different modali
 
 ## 📁 Repository Structure
 
-amazon-price-prediction/ ├── data/ │ ├── models/ │ │ └── resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5 # Local ResNet50 weights │ ├── train.csv │ └── test.csv │ └── *.pkl # Generated embeddings (ignored by .gitignore) ├── notebooks/ │ ├── 01_EDA_and_Baseline.ipynb # Exploration & text-only model iteration │ ├── 02_Image_Processing.ipynb # Pipeline for image download & embedding generation │ └── 03_Final_Model.ipynb # Master notebook: multi-modal model training & evaluation ├── src/ │ └── utils.py # Helper function for reliable image downloading ├── outputs/ │ └── submission_final_images.csv # Final predictions file ├── .gitignore ├── README.md # This file └── requirements.txt # Project dependencies
+<pre><code>
+amazon-price-prediction/
+├── data/
+│   ├── models/
+│   │   └── resnet50_weights_tf_dim_ordering_tf_kernels_notop.h5  # Local ResNet50 weights
+│   ├── train.csv
+│   └── test.csv
+│   └── *.pkl  # Generated embeddings (ignored by .gitignore)
+├── notebooks/
+│   ├── 01_EDA_and_Baseline.ipynb  # Exploration & text-only model iteration
+│   ├── 02_Image_Processing.ipynb  # Pipeline for image download & embedding generation
+│   └── 03_Final_Model.ipynb       # Master notebook: multi-modal model training & evaluation
+├── src/
+│   └── utils.py                   # Helper function for reliable image downloading
+├── outputs/
+│   └── submission_final_images.csv # Final predictions file
+├── .gitignore
+├── README.md                      # This file
+└── requirements.txt               # Project dependencies
+</code></pre>
 
 
 ## 🚀 Getting Started
